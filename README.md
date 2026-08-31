@@ -13,8 +13,8 @@ A desktop pet cat that lives on your screen. Drag files onto it to send them to 
 ## Usage
 
 ```bash
-pop-trash        # after pip install -e .
-python -m src    # dev mode
+pop-trash        # after pip install -e . — runs in background, no console window
+python -m src    # dev mode (with console)
 ```
 
 ## Setup

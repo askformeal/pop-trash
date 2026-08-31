@@ -16,7 +16,7 @@ dependencies = [
     "tkinterdnd2>=0.4",
 ]
 
-[project.scripts]
+[project.gui-scripts]
 pop-trash = "src.main:main"
 
 [tool.setuptools.packages.find]
