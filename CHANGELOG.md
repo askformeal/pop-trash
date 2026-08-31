@@ -17,3 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System tray icon (pystray) with Show/Hide and Quit menu
 - Tray icon mirrors the cat's open/close state
 - Multi-size .ico icons for tray use
+- `pop-trash` console command (pip install -e .)

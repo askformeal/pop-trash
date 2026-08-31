@@ -90,3 +90,7 @@ class Main:
             self.root.mainloop()
         except KeyboardInterrupt:
             ...
+
+
+def main():
+    Main().run()

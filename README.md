@@ -13,7 +13,8 @@ A desktop pet cat that lives on your screen. Drag files onto it to send them to 
 ## Usage
 
 ```bash
-python -m src
+pop-trash        # after pip install -e .
+python -m src    # dev mode
 ```
 
 ## Setup
