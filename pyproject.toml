@@ -5,14 +5,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pop-trash"
 version = "0.1.0"
-description = "TBD"
+description = "A desktop pet cat that sends dragged files to the recycle bin"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pillow>=10.0",
+    "pystray>=0.19",
+    "send2trash>=1.8",
+    "tkinterdnd2>=0.4",
+]
 
 [tool.setuptools.packages.find]
 include = ["src*", "res*"]
 
 [tool.setuptools.package-data]
-res = ["*.png"]
+res = ["*.png", "*.ico"]
+
+[tool.bumpversion]
+current_version = "0.1.0"
+[[tool.bumpversion.files]]
+filename = "src/__init__.py"
+search = "version = '{current_version}'"
+replace = "version = '{new_version}'"
