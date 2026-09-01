@@ -34,7 +34,7 @@ class Main:
         self.root.dnd_bind('<<DropEnter>>', self._on_enter)
         self.root.dnd_bind('<<DropLeave>>', self._on_leave)
 
-        self.root.bind('<ButtonPress-1>', lambda e: self._open())
+        self.root.bind('<ButtonPress-1>', self._on_lmb_press)
         self.root.bind('<ButtonRelease-1>', self._on_release)
         self.root.bind('<ButtonRelease-3>', self._on_release)
 
@@ -42,8 +42,8 @@ class Main:
         self.root.bind('<B1-Motion>', self._move)
 
         self.root.bind('<Button-3>', self._start_move)
-        self.root.bind('<Double-Button-1>', self._lmb_start_move)
 
+        self.root.bind('<Double-Button-1>', self._reset_pos)
         self.root.bind('<Double-Button-3>', self._reset_pos)
 
         self.close_image = ImageTk.PhotoImage(Image.open(self.CLOSE_PATH))
@@ -95,8 +95,14 @@ class Main:
     def _on_leave(self, event):
         self._close()
 
+    def _on_lmb_press(self, event):
+        self._open()
+        if CONFIG.lmb_drag:
+            self._start_move(event)
+
     def _on_release(self, event):
-        self._close()
+        if event.num == 1:
+            self._close()
         self.moving = False
 
     def _on_drop(self, event):
@@ -134,16 +140,16 @@ class Main:
         self.x = event.x
         self.y = event.y
 
-    def _lmb_start_move(self, event):
-        if CONFIG.lmb_drag:
-            self._start_move(event)
-
     def _move(self, event):
         if self.moving:
             self.root.geometry(f'+{event.x_root-self.x}+{event.y_root-self.y}')
 
     def _reset_pos(self, event):
-        self.root.geometry(f'{INIT_X}{INIT_Y}')
+        if event.num == 1:
+            self._open()
+        if event.num != 1 or CONFIG.lmb_drag:
+            self.root.geometry(f'{INIT_X}{INIT_Y}')
+            self.moving = False
 
     def run(self):
         Thread(target=self.icon.run, daemon=True).start()
