@@ -7,7 +7,10 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 from send2trash import send2trash
 from pystray import Icon, Menu, MenuItem
 from PIL import Image, ImageTk
+import pywinctl
 
+from src.config import CONFIG
+from src.constants import FULLSCREEN_TOLERANCE, INIT_X, INIT_Y, VISIBILITY_POLL_INTERVAL
 
 class Main:
     def __init__(self):
@@ -19,7 +22,7 @@ class Main:
 
         self.root = TkinterDnD.Tk()
 
-        self.root.geometry('-100-100')
+        self.root.geometry(f'{INIT_X}{INIT_Y}')
 
         self.root.overrideredirect(True)
         self.root.attributes('-topmost', True)
@@ -32,7 +35,16 @@ class Main:
         self.root.dnd_bind('<<DropLeave>>', self._on_leave)
 
         self.root.bind('<ButtonPress-1>', lambda e: self._open())
-        self.root.bind('<ButtonRelease-1>', lambda e: self._close())
+        self.root.bind('<ButtonRelease-1>', self._on_release)
+        self.root.bind('<ButtonRelease-3>', self._on_release)
+
+        self.root.bind('<B3-Motion>', self._move)
+        self.root.bind('<B1-Motion>', self._move)
+
+        self.root.bind('<Button-3>', self._start_move)
+        self.root.bind('<Double-Button-1>', self._lmb_start_move)
+
+        self.root.bind('<Double-Button-3>', self._reset_pos)
 
         self.close_image = ImageTk.PhotoImage(Image.open(self.CLOSE_PATH))
         self.open_image = ImageTk.PhotoImage(Image.open(self.OPEN_PATH))
@@ -43,22 +55,30 @@ class Main:
                             bd=0)
         self.image_label.pack()
 
+        self.show = True
+        self.root.after(VISIBILITY_POLL_INTERVAL, self._update_visibility)
+
+        self.x = 0
+        self.y = 0
+        self.moving = False
 
         self.close_icon = Image.open(self.CLOSE_ICON)
         self.open_icon = Image.open(self.OPEN_ICON)
 
         menu = (
-            MenuItem('Show/Hide', self._toggle, default=True),
+            MenuItem('Show/Hide', lambda *_: self.root.after(0, self._toggle), default=True),
+            MenuItem('Hide On Fullscreen', lambda *_: self._toggle_option('fullscreen_hide'), checked=lambda *_: CONFIG.fullscreen_hide),
+            MenuItem('LMB Drag', lambda *_: self._toggle_option('lmb_drag'), checked=lambda *_: CONFIG.lmb_drag),
             Menu.SEPARATOR,
-            MenuItem('Quit', self.root.destroy)
+            MenuItem('Quit', lambda *_: self.root.after(0, self.root.destroy))
         )
         self.icon = Icon('pop-cat', self.close_icon, 'Meow~', menu=menu)
 
-    def _toggle(self, *_):
-        if self.root.state() == 'withdrawn':
-            self.root.deiconify()
-        else:
-            self.root.withdraw()
+    def _toggle(self):
+        self.show = not self.show
+
+    def _toggle_option(self, name):
+        setattr(CONFIG, name, not getattr(CONFIG, name))
 
     def _open(self):
         self.image_label.config(image=self.open_image)
@@ -75,6 +95,10 @@ class Main:
     def _on_leave(self, event):
         self._close()
 
+    def _on_release(self, event):
+        self._close()
+        self.moving = False
+
     def _on_drop(self, event):
         self._close()
         paths = []
@@ -83,6 +107,43 @@ class Main:
 
         send2trash(paths)
         return event.action
+
+    def _is_fullscreen(self):
+        try:
+            window = pywinctl.getActiveWindow()
+            if window is None:
+                return False
+            else:
+                box = window.box
+                width, height = pywinctl.getScreenSize()
+                return (box.width >= width-FULLSCREEN_TOLERANCE and box.height >= height - FULLSCREEN_TOLERANCE)
+        except Exception:
+            return False
+
+    def _update_visibility(self):
+        if self.show and (not self._is_fullscreen() or not CONFIG.fullscreen_hide):
+            if self.root.state() == 'withdrawn':
+                self.root.deiconify()
+        else:
+            if self.root.state() != 'withdrawn':
+                self.root.withdraw()
+        self.root.after(VISIBILITY_POLL_INTERVAL, self._update_visibility)
+
+    def _start_move(self, event):
+        self.moving = True
+        self.x = event.x
+        self.y = event.y
+
+    def _lmb_start_move(self, event):
+        if CONFIG.lmb_drag:
+            self._start_move(event)
+
+    def _move(self, event):
+        if self.moving:
+            self.root.geometry(f'+{event.x_root-self.x}+{event.y_root-self.y}')
+
+    def _reset_pos(self, event):
+        self.root.geometry(f'{INIT_X}{INIT_Y}')
 
     def run(self):
         Thread(target=self.icon.run, daemon=True).start()
