@@ -14,6 +14,8 @@ dependencies = [
     "pystray>=0.19",
     "send2trash>=1.8",
     "tkinterdnd2>=0.4",
+    "pywinctl>=0.4",
+    "platformdirs>=4.0",
 ]
 
 [project.gui-scripts]
