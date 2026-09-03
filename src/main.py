@@ -11,6 +11,7 @@ from send2trash import send2trash
 from pystray import Icon, Menu, MenuItem
 from PIL import Image, ImageTk, ImageOps
 import pywinctl
+import playsound3
 
 from src.config import CONFIG
 from src.constants import FULLSCREEN_TOLERANCE, INIT_X, INIT_Y, VISIBILITY_POLL_INTERVAL
@@ -18,10 +19,12 @@ from src.constants import FULLSCREEN_TOLERANCE, INIT_X, INIT_Y, VISIBILITY_POLL_
 class Main:
     def __init__(self):
 
-        self.OPEN_PATH = str(files('res') / 'open.png')
-        self.CLOSE_PATH = str(files('res') / 'close.png')
-        self.OPEN_ICON = str(files('res') / 'open.ico')
-        self.CLOSE_ICON = str(files('res') / 'close.ico')
+        OPEN_PATH = str(files('res') / 'open.png')
+        CLOSE_PATH = str(files('res') / 'close.png')
+        OPEN_ICON = str(files('res') / 'open.ico')
+        CLOSE_ICON = str(files('res') / 'close.ico')
+
+        CHEW_PATH = str(files('res') / 'chew.wav')
 
         self.root = TkinterDnD.Tk()
 
@@ -53,8 +56,8 @@ class Main:
 
         self.buffer = Queue()
 
-        self.close_image = Image.open(self.CLOSE_PATH)
-        self.open_image = Image.open(self.OPEN_PATH)
+        self.close_image = Image.open(CLOSE_PATH)
+        self.open_image = Image.open(OPEN_PATH)
 
         self.close_image_flipped = ImageOps.mirror(self.close_image)
         self.open_image_flipped = ImageOps.mirror(self.open_image)
@@ -81,14 +84,15 @@ class Main:
         self.y = 0
         self.moving = False
 
-        self.close_icon = Image.open(self.CLOSE_ICON)
-        self.open_icon = Image.open(self.OPEN_ICON)
+        self.close_icon = Image.open(CLOSE_ICON)
+        self.open_icon = Image.open(OPEN_ICON)
 
         self.close_icon_flipped = ImageOps.mirror(self.close_icon)
         self.open_icon_flipped = ImageOps.mirror(self.open_icon)
 
         menu = (
             MenuItem('Show/Hide', self._toggle, default=True),
+            MenuItem('Sound Effects', lambda *_: self._toggle_option('sound_effects'), checked=lambda *_: CONFIG.sound_effects),
             MenuItem('Hide On Fullscreen', lambda *_: self._toggle_option('fullscreen_hide'), checked=lambda *_: CONFIG.fullscreen_hide),
             MenuItem('LMB Drag', lambda *_: self._toggle_option('lmb_drag'), checked=lambda *_: CONFIG.lmb_drag),
             MenuItem('Flip', self._toggle_flip, checked=lambda *_: CONFIG.flip),
@@ -96,6 +100,8 @@ class Main:
             MenuItem('Quit', lambda *_: self.root.after(0, self.root.destroy))
         )
         self.icon = Icon('pop-cat', self.close_icon, 'Meow~', menu=menu)
+
+        self.chew_path = CHEW_PATH
 
         self._update_image()
 
@@ -107,6 +113,12 @@ class Main:
                 send2trash(paths)
             except Exception as e:
                 self.root.after(0, messagebox.showerror, title=f'Delete Failed', message=str(e))
+            else:
+                if CONFIG.sound_effects:
+                    try:
+                        self.root.after(0, lambda: playsound3.playsound(self.chew_path, block=False))
+                    except Exception as e:
+                        print(e)
 
     def _toggle(self, *_):
         self.show = not self.show

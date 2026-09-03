@@ -16,6 +16,7 @@ dependencies = [
     "tkinterdnd2>=0.4",
     "pywinctl>=0.4",
     "platformdirs>=4.0",
+    "playsound3>=3.0",
 ]
 
 [project.gui-scripts]
@@ -25,7 +26,7 @@ pop-trash = "src.main:main"
 include = ["src*", "res*"]
 
 [tool.setuptools.package-data]
-res = ["*.png", "*.ico"]
+res = ["*.png", "*.ico", "*.wav"]
 
 [tool.bumpversion]
 current_version = "0.1.0"

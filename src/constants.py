@@ -21,13 +21,15 @@ def pos_int(value):
         return value
 
 CONFIG_DEFAULT = {
+            'sound_effects': True,
             'fullscreen_hide': True,
             'lmb_drag': False,
             'flip': False,
-            'temp_hide_time': 5
+            'temp_hide_time': 5,
         }
 
 CONFIG_CONVERTER = {
+            'sound_effects': boolean,
             'fullscreen_hide': boolean,
             'lmb_drag': boolean,
             'flip': boolean,
