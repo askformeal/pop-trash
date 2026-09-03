@@ -4,7 +4,6 @@ from pathlib import Path
 import time
 import tkinter as tk
 from tkinter import messagebox
-from importlib.resources import files
 
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from send2trash import send2trash
@@ -14,18 +13,12 @@ import pywinctl
 import playsound3
 
 from src.config import CONFIG
+from src.constants import CHEW_INTERVAL, OPEN_PATH, CLOSE_PATH, OPEN_ICON, CLOSE_ICON, CHEW_PATH
+from src.constants import CHEW_TIME
 from src.constants import FULLSCREEN_TOLERANCE, INIT_X, INIT_Y, VISIBILITY_POLL_INTERVAL
 
 class Main:
     def __init__(self):
-
-        OPEN_PATH = str(files('res') / 'open.png')
-        CLOSE_PATH = str(files('res') / 'close.png')
-        OPEN_ICON = str(files('res') / 'open.ico')
-        CLOSE_ICON = str(files('res') / 'close.ico')
-
-        CHEW_PATH = str(files('res') / 'chew.wav')
-
         self.root = TkinterDnD.Tk()
 
         self.root.geometry(f'{INIT_X}{INIT_Y}')
@@ -69,6 +62,8 @@ class Main:
         self.open_image_flipped = ImageTk.PhotoImage(self.open_image_flipped)
 
         self.mouth_open = False
+        self.chewing = False
+        self.chew_start = 0
 
         self.image_label = tk.Label(self.root,
                             bg="#ffffff",
@@ -92,6 +87,7 @@ class Main:
 
         menu = (
             MenuItem('Show/Hide', self._toggle, default=True),
+            MenuItem('Chew', lambda *_: self._toggle_option('chew'), checked=lambda *_: CONFIG.chew),
             MenuItem('Sound Effects', lambda *_: self._toggle_option('sound_effects'), checked=lambda *_: CONFIG.sound_effects),
             MenuItem('Hide On Fullscreen', lambda *_: self._toggle_option('fullscreen_hide'), checked=lambda *_: CONFIG.fullscreen_hide),
             MenuItem('LMB Drag', lambda *_: self._toggle_option('lmb_drag'), checked=lambda *_: CONFIG.lmb_drag),
@@ -114,11 +110,23 @@ class Main:
             except Exception as e:
                 self.root.after(0, messagebox.showerror, title=f'Delete Failed', message=str(e))
             else:
-                if CONFIG.sound_effects:
-                    try:
-                        self.root.after(0, lambda: playsound3.playsound(self.chew_path, block=False))
-                    except Exception as e:
-                        print(e)
+                Thread(target=self._chew, daemon=True).start()
+
+    def _chew(self):
+        if CONFIG.chew:
+            if CONFIG.sound_effects:
+                self.root.after(0, lambda: playsound3.playsound(self.chew_path, block=False))
+
+            self.chewing = True
+            self.chew_start = time.time()
+            while self.chewing and time.time() - self.chew_start <= CHEW_TIME:
+                self.mouth_open = not self.mouth_open
+                self._update_image()
+                time.sleep(CHEW_INTERVAL)
+
+            self.chewing = False
+            self.chew_start = 0
+            self._close()
 
     def _toggle(self, *_):
         self.show = not self.show
@@ -150,10 +158,12 @@ class Main:
             self.root.after(0, self._update_image, thread_safe=True)
 
     def _open(self):
+        self.chewing = False
         self.mouth_open = True
         self._update_image()
 
     def _close(self):
+        self.chewing = False
         self.mouth_open = False
         self._update_image()
 

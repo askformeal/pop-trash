@@ -1,8 +1,17 @@
+from importlib.resources import files
 from pathlib import Path
 from platformdirs import PlatformDirs
 
 dirs = PlatformDirs('pop-trash', ensure_exists=True)
 CONFIG_PATH = Path(dirs.user_data_dir) / 'config.toml'
+OPEN_PATH = str(files('res') / 'open.png')
+CLOSE_PATH = str(files('res') / 'close.png')
+OPEN_ICON = str(files('res') / 'open.ico')
+CLOSE_ICON = str(files('res') / 'close.ico')
+CHEW_PATH = str(files('res') / 'chew.wav')
+
+CHEW_TIME = 2.3
+CHEW_INTERVAL = 0.1
 
 def boolean(value):
     value = str(value).lower()
@@ -21,6 +30,7 @@ def pos_int(value):
         return value
 
 CONFIG_DEFAULT = {
+            'chew': True,
             'sound_effects': True,
             'fullscreen_hide': True,
             'lmb_drag': False,
@@ -29,6 +39,7 @@ CONFIG_DEFAULT = {
         }
 
 CONFIG_CONVERTER = {
+            'chew': boolean,
             'sound_effects': boolean,
             'fullscreen_hide': boolean,
             'lmb_drag': boolean,
