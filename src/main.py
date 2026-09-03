@@ -3,6 +3,7 @@ from threading import Thread
 from pathlib import Path
 import time
 import tkinter as tk
+from tkinter import messagebox
 from importlib.resources import files
 
 from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -104,8 +105,8 @@ class Main:
             paths = list(map(Path, paths))
             try:
                 send2trash(paths)
-            except Exception:
-                ...
+            except Exception as e:
+                self.root.after(0, messagebox.showerror, title=f'Delete Failed', message=str(e))
 
     def _toggle(self, *_):
         self.show = not self.show
