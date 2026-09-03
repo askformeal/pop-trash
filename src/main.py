@@ -6,7 +6,7 @@ from importlib.resources import files
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from send2trash import send2trash
 from pystray import Icon, Menu, MenuItem
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 import pywinctl
 
 from src.config import CONFIG
@@ -46,17 +46,28 @@ class Main:
         self.root.bind('<Double-Button-1>', self._reset_pos)
         self.root.bind('<Double-Button-3>', self._reset_pos)
 
-        self.close_image = ImageTk.PhotoImage(Image.open(self.CLOSE_PATH))
-        self.open_image = ImageTk.PhotoImage(Image.open(self.OPEN_PATH))
+        self.close_image = Image.open(self.CLOSE_PATH)
+        self.open_image = Image.open(self.OPEN_PATH)
+
+        self.close_image_flipped = ImageOps.mirror(self.close_image)
+        self.open_image_flipped = ImageOps.mirror(self.open_image)
+
+        self.close_image = ImageTk.PhotoImage(self.close_image)
+        self.open_image = ImageTk.PhotoImage(self.open_image)
+
+        self.close_image_flipped = ImageTk.PhotoImage(self.close_image_flipped)
+        self.open_image_flipped = ImageTk.PhotoImage(self.open_image_flipped)
+
+        self.mouth_open = False
 
         self.image_label = tk.Label(self.root,
-                            image=self.close_image,
                             bg="#ffffff",
                             bd=0)
         self.image_label.pack()
 
+
         self.show = True
-        self.root.after(VISIBILITY_POLL_INTERVAL, self._update_visibility)
+        self.root.after(0, self._update_visibility)
 
         self.x = 0
         self.y = 0
@@ -65,28 +76,57 @@ class Main:
         self.close_icon = Image.open(self.CLOSE_ICON)
         self.open_icon = Image.open(self.OPEN_ICON)
 
+        self.close_icon_flipped = ImageOps.mirror(self.close_icon)
+        self.open_icon_flipped = ImageOps.mirror(self.open_icon)
+
         menu = (
-            MenuItem('Show/Hide', lambda *_: self.root.after(0, self._toggle), default=True),
+            MenuItem('Show/Hide', self._toggle, default=True),
             MenuItem('Hide On Fullscreen', lambda *_: self._toggle_option('fullscreen_hide'), checked=lambda *_: CONFIG.fullscreen_hide),
             MenuItem('LMB Drag', lambda *_: self._toggle_option('lmb_drag'), checked=lambda *_: CONFIG.lmb_drag),
+            MenuItem('Flip', self._toggle_flip, checked=lambda *_: CONFIG.flip),
             Menu.SEPARATOR,
             MenuItem('Quit', lambda *_: self.root.after(0, self.root.destroy))
         )
         self.icon = Icon('pop-cat', self.close_icon, 'Meow~', menu=menu)
 
-    def _toggle(self):
+        self._update_image()
+
+    def _toggle(self, *_):
         self.show = not self.show
+
+    def _toggle_flip(self, *_):
+        self._toggle_option('flip')
+        self._update_image()
 
     def _toggle_option(self, name):
         setattr(CONFIG, name, not getattr(CONFIG, name))
 
+    def _update_image(self, thread_safe=False):
+        if thread_safe:
+            if self.mouth_open:
+                if CONFIG.flip:
+                    self.image_label.config(image=self.open_image_flipped)
+                    self.icon.icon = self.open_icon_flipped
+                else:
+                    self.image_label.config(image=self.open_image)
+                    self.icon.icon = self.open_icon
+            else:
+                if CONFIG.flip:
+                    self.image_label.config(image=self.close_image_flipped)
+                    self.icon.icon = self.close_icon_flipped
+                else:
+                    self.image_label.config(image=self.close_image)
+                    self.icon.icon = self.close_icon
+        else:
+            self.root.after(0, self._update_image, thread_safe=True)
+
     def _open(self):
-        self.image_label.config(image=self.open_image)
-        self.icon.icon = self.open_icon
+        self.mouth_open = True
+        self._update_image()
 
     def _close(self):
-        self.image_label.config(image=self.close_image)
-        self.icon.icon = self.close_icon
+        self.mouth_open = False
+        self._update_image()
 
     def _on_enter(self, event):
         self._open()

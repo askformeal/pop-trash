@@ -16,11 +16,13 @@ def boolean(value):
 CONFIG_DEFAULT = {
             'fullscreen_hide': True,
             'lmb_drag': False,
+            'flip': False
         }
 
 CONFIG_CONVERTER = {
             'fullscreen_hide': boolean,
             'lmb_drag': boolean,
+            'flip': boolean,
         }
 
 INIT_X = '-100'
