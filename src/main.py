@@ -1,5 +1,6 @@
 from threading import Thread
 from pathlib import Path
+import time
 import tkinter as tk
 from importlib.resources import files
 
@@ -46,6 +47,8 @@ class Main:
         self.root.bind('<Double-Button-1>', self._reset_pos)
         self.root.bind('<Double-Button-3>', self._reset_pos)
 
+        self.root.bind('<ButtonPress-2>', self._temp_hide)
+
         self.close_image = Image.open(self.CLOSE_PATH)
         self.open_image = Image.open(self.OPEN_PATH)
 
@@ -67,6 +70,7 @@ class Main:
 
 
         self.show = True
+        self.temp_hide_time = 0
         self.root.after(0, self._update_visibility)
 
         self.x = 0
@@ -154,6 +158,9 @@ class Main:
         send2trash(paths)
         return event.action
 
+    def _temp_hide(self, *_):
+        self.temp_hide_time = time.time()
+
     def _is_fullscreen(self):
         try:
             window = pywinctl.getActiveWindow()
@@ -167,7 +174,7 @@ class Main:
             return False
 
     def _update_visibility(self):
-        if self.show and (not self._is_fullscreen() or not CONFIG.fullscreen_hide):
+        if self.show and (not self._is_fullscreen() or not CONFIG.fullscreen_hide) and (time.time() - self.temp_hide_time > CONFIG.temp_hide_time):
             if self.root.state() == 'withdrawn':
                 self.root.deiconify()
         else:

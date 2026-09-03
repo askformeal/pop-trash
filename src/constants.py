@@ -13,16 +13,25 @@ def boolean(value):
     else:
         raise ValueError
 
+def pos_int(value):
+    value = int(value)
+    if value <= 0:
+        raise ValueError
+    else:
+        return value
+
 CONFIG_DEFAULT = {
             'fullscreen_hide': True,
             'lmb_drag': False,
-            'flip': False
+            'flip': False,
+            'temp_hide_time': 5
         }
 
 CONFIG_CONVERTER = {
             'fullscreen_hide': boolean,
             'lmb_drag': boolean,
             'flip': boolean,
+            'temp_hide_time': pos_int,
         }
 
 INIT_X = '-100'
