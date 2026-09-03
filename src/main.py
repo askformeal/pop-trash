@@ -1,3 +1,4 @@
+from queue import Queue
 from threading import Thread
 from pathlib import Path
 import time
@@ -49,6 +50,8 @@ class Main:
 
         self.root.bind('<ButtonPress-2>', self._temp_hide)
 
+        self.buffer = Queue()
+
         self.close_image = Image.open(self.CLOSE_PATH)
         self.open_image = Image.open(self.OPEN_PATH)
 
@@ -94,6 +97,15 @@ class Main:
         self.icon = Icon('pop-cat', self.close_icon, 'Meow~', menu=menu)
 
         self._update_image()
+
+    def _flush_buffer(self):
+        while True:
+            paths = self.buffer.get()
+            paths = list(map(Path, paths))
+            try:
+                send2trash(paths)
+            except Exception:
+                ...
 
     def _toggle(self, *_):
         self.show = not self.show
@@ -151,11 +163,7 @@ class Main:
 
     def _on_drop(self, event):
         self._close()
-        paths = []
-        for path in self.root.tk.splitlist(event.data):
-            paths.append(Path(path))
-
-        send2trash(paths)
+        self.buffer.put(self.root.tk.splitlist(event.data))
         return event.action
 
     def _temp_hide(self, *_):
@@ -199,6 +207,7 @@ class Main:
             self.moving = False
 
     def run(self):
+        Thread(target=self._flush_buffer, daemon=True).start()
         Thread(target=self.icon.run, daemon=True).start()
         try:
             self.root.mainloop()
