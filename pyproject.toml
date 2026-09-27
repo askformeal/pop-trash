@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pop-trash"
-version = "0.1.0"
+version = "0.2.0"
 description = "A desktop pet cat that sends dragged files to the recycle bin"
 readme = "README.md"
 license = "MIT"
@@ -30,7 +30,7 @@ include = ["src*", "res*"]
 res = ["*.png", "*.ico", "*.wav"]
 
 [tool.bumpversion]
-current_version = "0.1.0"
+current_version = "0.2.0"
 [[tool.bumpversion.files]]
 filename = "src/__init__.py"
 search = "version = '{current_version}'"
