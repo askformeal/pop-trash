@@ -17,6 +17,7 @@ dependencies = [
     "pywinctl>=0.4",
     "platformdirs>=4.0",
     "playsound3>=3.0",
+    "tomli_w>=1.0",
 ]
 
 [project.gui-scripts]

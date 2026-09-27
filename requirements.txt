@@ -2,4 +2,7 @@ pillow>=10.0
 pystray>=0.19
 send2trash>=1.8
 tkinterdnd2>=0.4
+pywinctl>=0.4
+platformdirs>=4.0
 playsound3>=3.0
+tomli_w>=1.0

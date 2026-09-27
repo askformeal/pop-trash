@@ -3,7 +3,9 @@ from threading import Thread
 from pathlib import Path
 import time
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import messagebox
+import os
 
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from send2trash import send2trash
@@ -13,13 +15,30 @@ import pywinctl
 import playsound3
 
 from src.config import CONFIG
-from src.constants import CHEW_INTERVAL, OPEN_PATH, CLOSE_PATH, OPEN_ICON, CLOSE_ICON, CHEW_PATH
-from src.constants import CHEW_TIME
-from src.constants import FULLSCREEN_TOLERANCE, INIT_X, INIT_Y, VISIBILITY_POLL_INTERVAL
+from src.constants import (
+    CHEW_INTERVAL, 
+    OPEN_PATH, 
+    CLOSE_PATH, 
+    OPEN_ICON, 
+    CLOSE_ICON, 
+    CHEW_PATH, 
+    CHEW_TIME, 
+    FULLSCREEN_TOLERANCE, 
+    INIT_X, 
+    INIT_Y, 
+    VISIBILITY_POLL_INTERVAL,
+
+    FONT_SIZE,
+    STATS_IMAGE_SIZE
+    )
+from src.stats import Stats
+from src.utils import format_bytes
 
 class Main:
     def __init__(self):
         self.root = TkinterDnD.Tk()
+
+        self.stats = Stats(self.root)
 
         self.root.geometry(f'{INIT_X}{INIT_Y}')
 
@@ -61,6 +80,10 @@ class Main:
         self.close_image_flipped = ImageTk.PhotoImage(self.close_image_flipped)
         self.open_image_flipped = ImageTk.PhotoImage(self.open_image_flipped)
 
+        self.stats_image = Image.open(CLOSE_PATH)
+        self.stats_image = self.stats_image.resize(STATS_IMAGE_SIZE)
+        self.stats_image = ImageTk.PhotoImage(self.stats_image)
+
         self.mouth_open = False
         self.chewing = False
         self.chew_start = 0
@@ -93,6 +116,8 @@ class Main:
             MenuItem('LMB Drag', lambda *_: self._toggle_option('lmb_drag'), checked=lambda *_: CONFIG.lmb_drag),
             MenuItem('Flip', self._toggle_flip, checked=lambda *_: CONFIG.flip),
             Menu.SEPARATOR,
+            MenuItem('Stats', lambda *_: self.root.after(0, self._show_stats)),
+            Menu.SEPARATOR,
             MenuItem('Quit', lambda *_: self.root.after(0, self.root.destroy))
         )
         self.icon = Icon('pop-cat', self.close_icon, 'Meow~', menu=menu)
@@ -105,12 +130,28 @@ class Main:
         while True:
             paths = self.buffer.get()
             paths = list(map(Path, paths))
+
+            sizes = []
+
+            for path in paths:
+                try:
+                    size = os.path.getsize(path)
+                except OSError as e:
+                    msg = str(e)
+                    self.root.after(
+                        0, 
+                        lambda path=path, msg=msg: messagebox.showerror('Error', f'Failed to get size of file {path}: {msg}')
+                        )
+                else:
+                    sizes.append(size)
             try:
                 send2trash(paths)
             except Exception as e:
                 self.root.after(0, messagebox.showerror, title=f'Delete Failed', message=str(e))
             else:
                 Thread(target=self._chew, daemon=True).start()
+                for size in sizes:
+                    self.stats.record_size(size)
 
     def _chew(self):
         if CONFIG.chew:
@@ -228,6 +269,59 @@ class Main:
         if event.num != 1 or CONFIG.lmb_drag:
             self.root.geometry(f'{INIT_X}{INIT_Y}')
             self.moving = False
+
+    def _show_stats(self):
+        stats = self.stats.get_stats()
+        total = format_bytes(stats['total_size'])
+
+        font = tkfont.Font(
+            size=FONT_SIZE
+        )
+
+        window = tk.Toplevel(
+            self.root,
+            bg='white', 
+            padx=5, pady=5
+        )
+        window.withdraw()
+        window.title('')
+        window.transient(self.root)
+        window.iconbitmap(CLOSE_ICON)
+
+        tk.Label(window, image=self.stats_image, bg='white').pack(side='left')
+
+        frame = tk.Frame(window, bg='white')
+
+        frame.pack(side='left')
+
+        tk.Label(
+            frame, 
+            text=f'Pop had eaten totally {total} of your files.',
+            font=font,
+            bg='white'
+            ).pack(padx=10, pady=(5, 20))
+        
+        tk.Label(
+            frame, 
+            text='Say thank you to Pop',
+            font=font,
+            bg='white'
+            ).pack(padx=10, pady=(5, 40))
+
+        tk.Button(
+            frame, 
+            text="\"Thank you Pop!\"", 
+            font=font,
+            command=window.destroy,
+            ).pack()
+
+        window.update_idletasks()
+
+        x = (window.winfo_screenwidth() - window.winfo_reqwidth()) // 2
+        y = (window.winfo_screenheight() - window.winfo_reqheight()) // 2
+
+        window.geometry(f'+{x}+{y}')
+        window.deiconify()
 
     def run(self):
         Thread(target=self._flush_buffer, daemon=True).start()

@@ -2,8 +2,18 @@ from importlib.resources import files
 from pathlib import Path
 from platformdirs import PlatformDirs
 
+ENCODING = 'utf-8'
+
 dirs = PlatformDirs('pop-trash', ensure_exists=True)
+
 CONFIG_PATH = Path(dirs.user_data_dir) / 'config.toml'
+STATS_PATH = Path(dirs.user_data_dir) / 'stats.json'
+STATS_CORRUPTED_PATH = Path(dirs.user_data_dir) / 'stats-corrupted.json'
+
+DEFAULT_STATS = {
+    'total_size': 0
+}
+
 OPEN_PATH = str(files('res') / 'open.png')
 CLOSE_PATH = str(files('res') / 'close.png')
 OPEN_ICON = str(files('res') / 'open.ico')
@@ -12,6 +22,10 @@ CHEW_PATH = str(files('res') / 'chew.wav')
 
 CHEW_TIME = 2.3
 CHEW_INTERVAL = 0.1
+
+FONT_SIZE = 15
+
+STATS_IMAGE_SIZE = (128, 128)
 
 def boolean(value):
     value = str(value).lower()

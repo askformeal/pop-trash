@@ -7,11 +7,16 @@ __pycache__/
 venv/
 .venv/
 
+# Build resources
+build_res/
+build.sh
+
 # Distribution / packaging
 build/
 dist/
 *.egg-info/
 .eggs/
+pop-trash-*/
 
 # Test / coverage
 .pytest_cache/
